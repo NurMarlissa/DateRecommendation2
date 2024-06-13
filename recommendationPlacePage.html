@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <title>Recommended Places</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f799ad;
+            font-family: Arial, sans-serif;
+        }
+
+        nav {
+            width: 100%;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            text-align: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        h3 {
+            text-align: center;
+            padding-left: 5px;
+        }
+
+        .recommendation {
+            text-align: center;
+        }
+
+        .logo-container {
+            margin-bottom: 20px;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            width: 200px;
+        }
+
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            margin: auto;
+        }
+
+        #map {
+            width: 100%;
+            height: 400px;
+            margin-top: 20px;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: space-between; /* Updated */
+            width: 100%;
+            padding-top: 2%;
+        }
+
+        .next-button, .back-button { /* Updated */
+            font-size: 15px;
+            cursor: pointer;
+            border-radius: 25px;
+            border: 1px solid #333;
+            padding: 10px 20px;
+            background-color: white;
+            color: black;
+            text-align: center;
+        }
+
+        .next-button:hover, .back-button:hover { /* Updated */
+            background-color: #f799ad;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="logo-container">
+        <img src="logo.png" alt="logo" width="250" height="200">
+    </div>
+
+    <nav id="weather">
+        Loading weather...
+    </nav>
+
+    <div id="map"></div>
+    <div class="container">
+        <h3>Recommended Place</h3>
+        <div class="recommendation">
+            <h4 id="place-name" style="text-align: center; padding-left: 25px;">Loading...</h4>
+            <a id="map-link" href="#" target="_blank" style=" padding-left: 20px;">View on Google Maps</a>
+        </div>
+    </div>
+
+    <div class="button-container">
+        <input type="submit" value="Back" class="back-button" onclick="goBack()">
+        <input type="submit" value="Next" class="next-button" onclick="nextPage()">
+    </div>
+
+    <script>
+        async function fetchWeather(latitude, longitude) {
+            try {
+                const weatherResponse = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=0ae0957a949d320155fc231716343e83&units=metric`);
+                const weatherData = await weatherResponse.json();
+                const weatherElement = document.getElementById('weather');
+                const weatherDescription = weatherData.weather[0].description;
+                const temperature = weatherData.main.temp;
+                const location = weatherData.name;
+
+                weatherElement.textContent = `Weather in ${location}: ${weatherDescription}, ${temperature}°C`;
+
+                let backgroundColor;
+                switch (weatherDescription.toLowerCase()) {
+                    case 'clear sky':
+                        backgroundColor = '#87ceeb'; // Sky blue
+                        break;
+                    case 'few clouds':
+                    case 'scattered clouds':
+                    case 'broken clouds':
+                        backgroundColor = '#b0c4de'; // Light steel blue
+                        break;
+                    case 'shower rain':
+                    case 'rain':
+                        backgroundColor = '#4682b4'; // Steel blue
+                        break;
+                    case 'thunderstorm':
+                        backgroundColor = '#708090'; // Slate gray
+                        break;
+                    case 'snow':
+                        backgroundColor = '#f0f8ff'; // Alice blue
+                        break;
+                    case 'mist':
+                        backgroundColor = '#f5f5f5'; // White smoke
+                        break;
+                    default:
+                        backgroundColor = '#d3d3d3'; // Light gray
+                }
+
+                weatherElement.style.backgroundColor = backgroundColor;
+            } catch (error) {
+                console.error('Error fetching weather data:', error);
+            }
+        }
+
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+                    fetchWeather(latitude, longitude);
+                }, error => {
+                    console.error('Error getting geolocation:', error);
+                });
+            } else {
+                console.error('Geolocation is not supported by this browser.');
+            }
+        }
+
+        function storeRecommendation(placeName, mapUrl, latitude, longitude) {
+            localStorage.setItem('placeName', placeName);
+            localStorage.setItem('mapUrl', mapUrl);
+            localStorage.setItem('latitude', latitude);
+            localStorage.setItem('longitude', longitude);
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const dateType = localStorage.getItem('dateType');
+            const area = localStorage.getItem('area');
+
+            const recommendations = {
+                kedah: {
+                    dinner: {
+                        placeName: "Kedah Cuisine Restaurant",
+                        mapUrl: "https://www.google.com/maps?q=Kedah+Cuisine+Restaurant",
+                        latitude: "1.5304",
+                        longitude: "103.6295"
+                    },
+                    fun: {
+                        placeName: "Kedah Amusement Park",
+                        mapUrl: "https://www.google.com/maps?q=Kedah+Amusement+Park",
+                        latitude: "1.4776",
+                        longitude: "103.3930"
+                    },
+                    firstMeeting: {
+                        placeName: "Kedah Cozy Cafe",
+                        mapUrl: "https://www.google.com/maps?q=Kedah+Cozy+Cafe",
+                        latitude: "1.5304",
+                        longitude: "103.6295"
+                    },
+                    casual: {
+                        placeName: "Kedah City Park",
+                        mapUrl: "https://www.google.com/maps?q=Kedah+City+Park",
+                        latitude: "5.9733",
+                        longitude: "116.0724"
+                    }
+                },
+                kualalumpur: {
+                    
+                    dinner: {
+                        placeName: "KL Fine Dining",
+                        mapUrl: "https://www.google.com/maps?q=KL+Fine+Dining",
+                        latitude: "3.1390",
+                        longitude: "101.6869"
+                    },
+                    fun: {
+                        placeName: "KL Theme Park",
+                        mapUrl: "https://www.google.com/maps?q=KL+Theme+Park",
+                        latitude: "3.1390",
+                        longitude: "101.6869"
+                    },
+                    firstMeeting: {
+                        placeName: "KL Cozy Cafe",
+                        mapUrl: "https://www.google.com/maps?q=KL+Cozy+Cafe",
+                        latitude: "3.1390",
+                        longitude: "101.6869"
+                    },
+                    casual: {
+                        placeName: "KL Central Park",
+                        mapUrl: "https://www.google.com/maps?q=KL+Central+Park",
+                        latitude: "3.1390",
+                        longitude: "101.6869"
+                    }
+                },
+                pahang: {
+                    
+                    dinner: {
+                        placeName: "Pahang Dining",
+                        mapUrl: "https://www.google.com/maps?q=Pahang+Dining",
+                        latitude: "3.9070",
+                        longitude: "102.3777"
+                    },
+                    fun: {
+                        placeName: "Pahang Theme Park",
+                        mapUrl: "https://www.google.com/maps?q=Pahang+Theme+Park",
+                        latitude: "3.9070",
+                        longitude: "102.3777"
+                    },
+                    firstMeeting: {
+                        placeName: "Pahang Cafe",
+                        mapUrl: "https://www.google.com/maps?q=Pahang+Cafe",
+                        latitude: "3.9070",
+                        longitude: "102.3777"
+                    },
+                    casual: {
+                        placeName: "Pahang City Park",
+                        mapUrl: "https://www.google.com/maps?q=Pahang+City+Park",
+                        latitude: "3.9070",
+                        longitude: "102.3777"
+                    }
+                },
+                selangor: {
+                    
+                    dinner: {
+                        placeName: "Selangor Restaurant",
+                        mapUrl: "https://www.google.com/maps?q=Selangor+Restaurant",
+                        latitude: "3.0738",
+                        longitude: "101.5183"
+                    },
+                    fun: {
+                        placeName: "Selangor Theme Park",
+                        mapUrl: "https://www.google.com/maps?q=Selangor+Theme+Park",
+                        latitude: "3.0738",
+                        longitude: "101.5183"
+                    },
+                    firstMeeting: {
+                        placeName: "Selangor Cafe",
+                        mapUrl: "https://www.google.com/maps?q=Selangor+Cafe",
+                        latitude: "3.0738",
+                        longitude: "101.5183"
+                    },
+                    casual: {
+                        placeName: "Selangor City Park",
+                        mapUrl: "https://www.google.com/maps?q=Selangor+City+Park",
+                        latitude: "3.0738",
+                        longitude: "101.5183"
+                    }
+                },
+                terengganu: {
+                    
+                    dinner: {
+                        placeName: "Terengganu Restaurant",
+                        mapUrl: "https://www.google.com/maps?q=Terengganu+Restaurant",
+                        latitude: "5.4475",
+                        longitude: "103.0406"
+                    },
+                    fun: {
+                        placeName: "Terengganu Theme Park",
+                        mapUrl: "https://www.google.com/maps?q=Terengganu+Theme+Park",
+                        latitude: "5.4475",
+                        longitude: "103.0406"
+                    },
+                    firstMeeting: {
+                        placeName: "Terengganu Cafe",
+                        mapUrl: "https://www.google.com/maps?q=Terengganu+Cafe",
+                        latitude: "5.4475",
+                        longitude: "103.0406"
+                    },
+                    casual: {
+                        placeName: "Terengganu City Park",
+                        mapUrl: "https://www.google.com/maps?q=Terengganu+City+Park",
+                        latitude: "5.4475",
+                        longitude: "103.0406"
+                    }
+                },
+                kelantan: {
+                    
+                    dinner: {
+                        placeName: "Kelantan Restaurant",
+                        mapUrl: "https://www.google.com/maps?q=Kelantan+Restaurant",
+                        latitude: "6.1254",
+                        longitude: "102.2385"
+                    },
+                    fun: {
+                        placeName: "Kelantan Theme Park",
+                        mapUrl: "https://www.google.com/maps?q=Kelantan+Theme+Park",
+                        latitude: "6.1254",
+                        longitude: "102.2385"
+                    },
+                    firstMeeting: {
+                        placeName: "Kelantan Cafe",
+                        mapUrl: "https://www.google.com/maps?q=Kelantan+Cafe",
+                        latitude: "6.1254",
+                        longitude: "102.2385"
+                    },
+                    casual: {
+                        placeName: "Kelantan City Park",
+                        mapUrl: "https://www.google.com/maps?q=Kelantan+City+Park",
+                        latitude: "6.1254",
+                        longitude: "102.2385"
+                    }
+                },
+                perak: {
+                    
+                    dinner: {
+                        placeName: "Perak Restaurant",
+                        mapUrl: "https://www.google.com/maps?q=Perak+Restaurant",
+                        latitude: "4.5921",
+                        longitude: "101.0901"
+                    },
+                    fun: {
+                        placeName: "Perak Theme Park",
+                        mapUrl: "https://www.google.com/maps?q=Perak+Theme+Park",
+                        latitude: "4.5921",
+                        longitude: "101.0901"
+                    },
+                    firstMeeting: {
+                        placeName: "Perak Cafe",
+                        mapUrl: "https://www.google.com/maps?q=Perak+Cafe",
+                        latitude: "4.5921",
+                        longitude: "101.0901"
+                    },
+                    casual: {
+                        placeName: "Perak City Park",
+                        mapUrl: "https://www.google.com/maps?q=Perak+City+Park",
+                        latitude: "4.5921",
+                        longitude: "101.0901"
+                    }
+                },
+                perlis: {
+                    
+                    dinner: {
+                        placeName: "Perlis Restaurant",
+                        mapUrl: "https://www.google.com/maps?q=Perlis+Restaurant",
+                        latitude: "6.4381",
+                        longitude: "100.1941"
+                    },
+                    fun: {
+                        placeName: "Perlis Theme Park",
+                        mapUrl: "https://www.google.com/maps?q=Perlis+Theme+Park",
+                        latitude: "6.4381",
+                        longitude: "100.1941"
+                    },
+                    firstMeeting: {
+                        placeName: "Perlis Cafe",
+                        mapUrl: "https://www.google.com/maps?q=Perlis+Cafe",
+                        latitude: "6.4381",
+                        longitude: "100.1941"
+                    },
+                    casual: {
+                        placeName: "Perlis City Park",
+                        mapUrl: "https://www.google.com/maps?q=Perlis+City+Park",
+                        latitude: "6.4381",
+                        longitude: "100.1941"
+                    }
+                },
+                sabah: {
+                    
+                    dinner: {
+                        placeName: "Sabah Restaurant",
+                        mapUrl: "https://www.google.com/maps?q=Sabah+Restaurant",
+                        latitude: "5.9788",
+                        longitude: "116.0724"
+                    },
+                    fun: {
+                        placeName: "Sabah Theme Park",
+                        mapUrl: "https://www.google.com/maps?q=Sabah+Theme+Park",
+                        latitude: "5.9788",
+                        longitude: "116.0724"
+                    },
+                    firstMeeting: {
+                        placeName: "Sabah Cafe",
+                        mapUrl: "https://www.google.com/maps?q=Sabah+Cafe",
+                        latitude: "5.9788",
+                        longitude: "116.0724"
+                    },
+                    casual: {
+                        placeName: "Sabah City Park",
+                        mapUrl: "https://www.google.com/maps?q=Sabah+City+Park",
+                        latitude: "5.9788",
+                        longitude: "116.0724"
+                    }
+                },
+                sarawak: {
+                    
+                    dinner: {
+                        placeName: "Sarawak Restaurant",
+                        mapUrl: "https://www.google.com/maps?q=Sarawak+Restaurant",
+                        latitude: "1.5535",
+                        longitude: "110.3594"
+                    },
+                    fun: {
+                        placeName: "Sarawak Theme Park",
+                        mapUrl: "https://www.google.com/maps?q=Sarawak+Theme+Park",
+                        latitude: "1.5535",
+                        longitude: "110.3594"
+                    },
+                    firstMeeting: {
+                        placeName: "Sarawak Cafe",
+                        mapUrl: "https://www.google.com/maps?q=Sarawak+Cafe",
+                        latitude: "1.5535",
+                        longitude: "110.3594"
+                    },
+                    casual: {
+                        placeName: "Sarawak City Park",
+                        mapUrl: "https://www.google.com/maps?q=Sarawak+City+Park",
+                        latitude: "1.5535",
+                        longitude: "110.3594"
+                    }
+                },
+                melaka: {
+                    
+                    dinner: {
+                        placeName: "Melaka Restaurant",
+                        mapUrl: "https://www.google.com/maps?q=Melaka+Restaurant",
+                        latitude: "2.1896",
+                        longitude: "102.2501"
+                    },
+                    fun: {
+                        placeName: "Melaka Theme Park",
+                        mapUrl: "https://www.google.com/maps?q=Melaka+Theme+Park",
+                        latitude: "2.1896",
+                        longitude: "102.2501"
+                    },
+                    firstMeeting: {
+                        placeName: "Melaka Cafe",
+                        mapUrl: "https://www.google.com/maps?q=Melaka+Cafe",
+                        latitude: "2.1896",
+                        longitude: "102.2501"
+                    },
+                    casual: {
+                        placeName: "Melaka City Park",
+                        mapUrl: "https://www.google.com/maps?q=Melaka+City+Park",
+                        latitude: "2.1896",
+                        longitude: "102.2501"
+                    }
+                },
+                johor: {
+                    
+                    dinner: {
+                        placeName: "Johor Restaurant",
+                        mapUrl: "https://www.google.com/maps?q=Johor+Restaurant",
+                        latitude: "1.4927",
+                        longitude: "103.7414"
+                    },
+                    fun: {
+                        placeName: "Johor Theme Park",
+                        mapUrl: "https://www.google.com/maps?q=Johor+Theme+Park",
+                        latitude: "1.4927",
+                        longitude: "103.7414"
+                    },
+                    firstMeeting: {
+                        placeName: "Johor Cafe",
+                        mapUrl: "https://www.google.com/maps?q=Johor+Cafe",
+                        latitude: "1.4927",
+                        longitude: "103.7414"
+                    },
+                    casual: {
+                        placeName: "Johor City Park",
+                        mapUrl: "https://www.google.com/maps?q=Johor+City+Park",
+                        latitude: "1.4927",
+                        longitude: "103.7414"
+                    }
+                },
+                labuan: {
+                    
+                    dinner: {
+                        placeName: "Labuan Restaurant",
+                        mapUrl: "https://www.google.com/maps?q=Labuan+Restaurant",
+                        latitude: "5.2767",
+                        longitude: "115.2415"
+                    },
+                    fun: {
+                        placeName: "Labuan Theme Park",
+                        mapUrl: "https://www.google.com/maps?q=Labuan+Theme+Park",
+                        latitude: "5.2767",
+                        longitude: "115.2415"
+                    },
+                    firstMeeting: {
+                        placeName: "Labuan Cafe",
+                        mapUrl: "https://www.google.com/maps?q=Labuan+Cafe",
+                        latitude: "5.2767",
+                        longitude: "115.2415"
+                    },
+                    casual: {
+                        placeName: "Labuan City Park",
+                        mapUrl: "https://www.google.com/maps?q=Labuan+City+Park",
+                        latitude: "5.2767",
+                        longitude: "115.2415"
+                    }
+                },
+                negerisembilan: {
+                    
+                    dinner: {
+                        placeName: "Negeri Sembilan Restaurant",
+                        mapUrl: "https://www.google.com/maps?q=Negeri+Sembilan+Restaurant",
+                        latitude: "2.7254",
+                        longitude: "101.9424"
+                    },
+                    fun: {
+                        placeName: "Negeri Sembilan Theme Park",
+                        mapUrl: "https://www.google.com/maps?q=Negeri+Sembilan+Theme+Park",
+                        latitude: "2.7254",
+                        longitude: "101.9424"
+                    },
+                    firstMeeting: {
+                        placeName: "Negeri Sembilan Cafe",
+                        mapUrl: "https://www.google.com/maps?q=Negeri+Sembilan+Cafe",
+                        latitude: "2.7254",
+                        longitude: "101.9424"
+                    },
+                    casual: {
+                        placeName: "Negeri Sembilan City Park",
+                        mapUrl: "https://www.google.com/maps?q=Negeri+Sembilan+City+Park",
+                        latitude: "2.7254",
+                        longitude: "101.9424"
+                    }
+                }
+
+
+            };
+
+            const recommendation = recommendations[area] && recommendations[area][dateType];
+            if (recommendation) {
+                document.getElementById('place-name').textContent = recommendation.placeName;
+                document.getElementById('map-link').href = recommendation.mapUrl;
+
+                // Store recommendation details in localStorage
+                storeRecommendation(recommendation.placeName, recommendation.mapUrl, recommendation.latitude, recommendation.longitude);
+                initMap(recommendation.placeName, parseFloat(recommendation.latitude), parseFloat(recommendation.longitude));
+            } else {
+                document.getElementById('place-name').textContent = "No recommendation available";
+                document.getElementById('map-link').href = "#";
+
+                // Clear recommendation details from localStorage
+                localStorage.removeItem('placeName');
+                localStorage.removeItem('mapUrl');
+                localStorage.removeItem('latitude');
+                localStorage.removeItem('longitude');
+            }
+
+            getLocation();
+
+        });
+
+        function initMap(placeName, latitude, longitude) {
+            const mapContainer = document.getElementById("map-container"); // New
+            
+        }
+
+        function goBack() {
+            // Redirect to homePage.html
+            window.location.href = "homePage.html";
+        }
+
+
+        function nextPage() {
+            // Redirect to spotify.html
+            window.location.href = "spotify.html";
+        }
+    </script>
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCds6AAotDQ8GIDJuen2P04OCjQX7I2w50&libraries=places"></script>
+</body>
+
+</html>

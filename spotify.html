@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <title>Register and Spotify Playlist Page</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f799ad;
+            font-family: Arial, sans-serif;
+        }
+        nav {
+            width: 100%;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            text-align: center;
+            color: white;
+            font-size: 18px;
+        }
+        .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            width: 300px; /* Adjust width as needed */
+        }
+        .r-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            text-align: left;
+            width: 100%;
+        }
+        .r-container label {
+            margin-bottom: 5px;
+        }
+        .r-container input[type="text"], 
+        .r-container input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .r-container input[type="submit"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background-color: #ffffff;
+            color: black;
+            font-size: 15px;
+            cursor: pointer;
+            border-radius: 25px;
+            border: 1px solid #333;
+            text-align: center;
+        }
+        .r-container input[type="submit"]:hover {
+            background-color: #f799ad;
+        }
+        .playlist-section {
+            margin-top: 20px;
+            width: 300px;
+            text-align: center;
+        }
+        .playlist-section select, 
+        .playlist-section button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        .spotify-player {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .button {
+            font-size: 15px;
+            cursor: pointer;
+            border-radius: 25px;
+            border: 1px solid #333;
+            padding: 10px 20px;
+            background-color: white;
+            color: black;
+            text-align: center;
+        }
+
+        .button:hover {
+            background-color: #f799ad;
+            color: white;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="logo-container">
+        <img src="logo.png" alt="logo" width="250" height="200">
+    </div>
+    <nav id="weather">
+        Loading weather...
+    </nav>
+
+    <div class="playlist-section">
+        <h2>Choose a Genre and Playlist</h2>
+        <select id="genreSelect">
+            <option value="">Select Genre</option>
+            <option value="kpop">K-Pop</option>
+            <option value="malay_pop">Malay Pop</option>
+            <option value="rnb">R&B</option>
+            <option value="love">Love</option>
+        </select>
+        <select id="playlistSelect" disabled>
+            <option value="">Select Playlist</option>
+        </select>
+        <button id="showPlaylist" disabled>Show Playlist</button>
+    </div>
+    
+    <div class="spotify-player" id="spotifyPlayer">
+        <iframe id="spotify-embed" src="" width="300" height="380" frameborder="0" 
+        allowtransparency="true" allow="encrypted-media"></iframe>
+    </div>
+
+    <div class="button-container">
+        <button class="button" onclick="goBack()">Back</button>
+        <button class="button" onclick="nextPage()">Next</button>
+    </div>
+    
+    
+    <script>
+       async function fetchWeather(latitude, longitude) {
+            try {
+                const weatherResponse = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=0ae0957a949d320155fc231716343e83&units=metric`);
+                const weatherData = await weatherResponse.json();
+                const weatherElement = document.getElementById('weather');
+                const weatherDescription = weatherData.weather[0].description;
+                const temperature = weatherData.main.temp;
+                const location = weatherData.name;
+
+                weatherElement.textContent = `Weather in ${location}: ${weatherDescription}, ${temperature}°C`;
+
+                let backgroundColor;
+                switch (weatherDescription.toLowerCase()) {
+                    case 'clear sky':
+                        backgroundColor = '#87ceeb'; // Sky blue
+                        break;
+                    case 'few clouds':
+                    case 'scattered clouds':
+                    case 'broken clouds':
+                        backgroundColor = '#b0c4de'; // Light steel blue
+                        break;
+                    case 'shower rain':
+                    case 'rain':
+                        backgroundColor = '#4682b4'; // Steel blue
+                        break;
+                    case 'thunderstorm':
+                        backgroundColor = '#708090'; // Slate gray
+                        break;
+                    case 'snow':
+                        backgroundColor = '#f0f8ff'; // Alice blue
+                        break;
+                    case 'mist':
+                        backgroundColor = '#f5f5f5'; // White smoke
+                        break;
+                    default:
+                        backgroundColor = '#d3d3d3'; // Light gray
+                }
+
+                weatherElement.style.backgroundColor = backgroundColor;
+            } catch (error) {
+                console.error('Error fetching weather data:', error);
+            }
+        }
+
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+                    fetchWeather(latitude, longitude);
+                }, error => {
+                    console.error('Error getting geolocation:', error);
+                });
+            } else {
+                console.error('Geolocation is not supported by this browser.');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', getLocation);
+
+        const genreSelect = document.getElementById('genreSelect');
+        const playlistSelect = document.getElementById('playlistSelect');
+        const showPlaylistButton = document.getElementById('showPlaylist');
+        const spotifyPlayer = document.getElementById('spotifyPlayer');
+
+        const clientId = '2c7d181908274d55882442c411dd1b39';
+        const clientSecret = 'b6c571d23b9945b88c85765ee5afba01';
+        const tokenEndpoint = 'https://accounts.spotify.com/api/token';
+
+        const requestBody = new URLSearchParams();
+        requestBody.append('grant_type', 'client_credentials');
+        requestBody.append('client_id', clientId);
+        requestBody.append('client_secret', clientSecret);
+
+        fetch(tokenEndpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: requestBody
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to obtain access token');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const accessToken = data.access_token;
+
+            genreSelect.addEventListener('change', () => {
+                const genre = genreSelect.value;
+                playlistSelect.innerHTML = '<option value="">Select Playlist</option>';
+                if (genre) {
+                    playlists[genre].forEach(playlist => {
+                        const option = document.createElement('option');
+                        option.value = playlist.id;
+                        option.textContent = playlist.name;
+                        playlistSelect.appendChild(option);
+                    });
+                    playlistSelect.disabled = false;
+                    showPlaylistButton.disabled = true;
+                } else {
+                    playlistSelect.disabled = true;
+                    showPlaylistButton.disabled = true;
+                }
+            });
+
+            playlistSelect.addEventListener('change', () => {
+                showPlaylistButton.disabled = !playlistSelect.value;
+            });
+
+            showPlaylistButton.addEventListener('click', async () => {
+    const playlistId = playlistSelect.value;
+    if (playlistId) {
+        try {
+            const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}`, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+            if (!response.ok) {
+                throw new Error('Failed to fetch playlist');
+            }
+            const spotifyEmbedUrl = `https://open.spotify.com/embed/playlist/${playlistId}`;
+            document.getElementById('spotify-embed').src = spotifyEmbedUrl;
+            spotifyPlayer.style.display = 'block';
+            
+            // Store the selected playlist ID in localStorage
+            localStorage.setItem('selectedPlaylist', playlistId);
+        } catch (error) {
+            console.error('Error fetching Spotify playlist data:', error);
+        }
+    }
+});
+ })
+        .catch(error => {
+            console.error('Error:', error.message);
+        });
+        const playlists = {
+    kpop: [
+        { id: '37i9dQZF1DX9tPFwDMOaN1', name: 'K-Pop Daebak' },
+        { id: '37i9dQZF1DX2ohL85TE8TI', name: 'Korean OSTs' },
+        { id: '37i9dQZF1DXaHbNgKAMWAM', name: 'K-Pop Love Song' } // Correct ID
+    ],
+    malay_pop: [
+        { id: '37i9dQZF1DX6IdgnkXHL4C', name: 'Best of Balada' },
+        { id: '37i9dQZF1DWY6f9OGlItya', name: 'Cinta Sejati' },
+        { id: '37i9dQZF1DXb1RLKxkHZ77', name: 'Carta Malaysia' } // Correct ID
+    ],
+    rnb: [
+        { id: '37i9dQZF1DXaPeYMCDRQeg', name: 'Love Language' },
+        { id: '37i9dQZF1DWTJNOeepZTGy', name: 'Wine and Dine' },
+        { id: '37i9dQZF1DX2UgsUIg75Vg', name: 'Chilled R&B' },
+        { id: '37i9dQZF1DWYtDSKIiDhua', name: 'Mood' } // Correct ID
+    ],
+    love: [
+        { id: '37i9dQZF1DX5Hl0iWtr5b3', name: 'Bridgeton OST' },
+        { id: '37i9dQZF1DX19jOGJFjAzV', name: 'Couple in Love' },
+        { id: '37i9dQZF1DX4cizS4wQeF2', name: 'RomCom' } // Correct ID
+    ]
+};
+
+function nextPage() {
+            // Redirect to spotify.html
+            window.location.href = "result.html";
+        }
+
+function goBack() {
+            // Redirect to recommendationPlacePage.html
+            window.location.href = "recommendationPlacePage.html";
+        }
+
+    </script>
+</body>
+</html>
+

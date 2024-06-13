@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <title>Login Page</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f799ad;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .input-container {
+            width: 40%;
+            margin: 10px 0;
+        }
+
+        .input-container input {
+            width: 300px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 30px;
+            text-align: center;
+            display:center;
+            margin-right: -10px;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px; /* Adjust the gap as needed */
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .buttons a {
+            text-decoration: none;
+        }
+
+        .buttons input[type="submit"], 
+        .buttons input[type="button"] {
+            width: 100px; /* Adjust the width to be the same for both buttons */
+            padding: 12px;
+            border: none;
+            background-color: #ffffff;
+            color: black;
+            font-size: 15px;
+            cursor: pointer;
+            border-radius: 25px;
+            text-align: center;
+        }
+
+        .buttons input[type="submit"]:hover,
+        .buttons input[type="button"]:hover {
+            background-color:#f96081;
+        }
+
+        .error-message {
+            color: red;
+            display: none;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="logo.png" alt="logo" width="250" height="200">
+        <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
+            <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
+            <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/>
+        </svg>
+        <br>
+        <form action="homePage.html" onsubmit="return validateForm()">
+            <div class="input-container">
+                <input type="text" id="username" size="55" placeholder="username">
+            </div>
+            <div class="input-container">
+                <input type="password" id="password" size="55" placeholder="password">
+            </div>
+            <div class="error-message" id="error-message">Username and password must fill in</div>
+            <div class="buttons">
+                <input type="submit" value="Login">
+                <a href="registerPage.html">
+                    <input type="button" value="Register">
+                </a>
+            </div>
+        </form>
+    </div>
+    <script>
+        function validateForm() {
+            var username = document.getElementById('username').value;
+            var password = document.getElementById('password').value;
+            var errorMessage = document.getElementById('error-message');
+
+            if (username === "" || password === "") {
+                errorMessage.style.display = 'block';
+                return false;
+            } else {
+                errorMessage.style.display = 'none';
+                return true;
+            }
+        }
+    </script>
+</body>
+</html>
